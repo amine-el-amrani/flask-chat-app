@@ -21,7 +21,7 @@ This chat application allows users to register, log in, join specific chat rooms
 1. **Clone the repository and navigate to the project directory**
 
 ```bash
-   git clone https://github.com/yourusername/chat-app.git && cd chat-app
+   git clone https://github.com/amine-el-amrani/flask-chat-app.git && cd flask-chat-app
 ```
 
 2. **Create a virtual environment**
