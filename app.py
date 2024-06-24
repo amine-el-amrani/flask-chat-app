@@ -1,14 +1,43 @@
+from db import save_user, get_user
 from flask import Flask, render_template, request, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_socketio import SocketIO, join_room, leave_room
 
 app = Flask(__name__)
+app.secret_key = 'mysecret'
 socketio = SocketIO(app)
+logging_manager = LoginManager()
+logging_manager.login_view = 'login'
+logging_manager.init_app(app)
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    message = ''
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = get_user(username)
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            message = 'Failed to login!'
+    return render_template('login.html', message=message)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
 @app.route('/chat')
+@login_required
 def chat():
     username = request.args.get('username')
     room = request.args.get('room')
@@ -34,6 +63,9 @@ def handle_join_room_event(data):
     join_room(data['room'])
     socketio.emit('join_room_announcement', data, room=data['room'])
 
+@logging_manager.user_loader
+def load_user(username):
+    return get_user(username)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
